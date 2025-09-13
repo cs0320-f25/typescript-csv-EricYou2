@@ -1,0 +1,29 @@
+Prompt: This sprint asks you to process CSV data into TypeScript objects via Zod. Pick your favorite data structure (something like a stack, a linked-list, a heap, etc.) and explain how you would represent JSON-encoded instances of that data structure with a Zod schema. We do not expect a fully working schema. If there is something you would like to express, but aren’t sure about how to do, include these comments in your hand-in.
+
+My favorite data structure is a Stack because of its versatility to keep track of the most recent items if a developer ever needs this behavior. The important core characteristic that makes up this LIFO (Last In First Out) data structure is that a stack should be an array of elements of the same type. A common representation of a stack in JSON would be like:
+
+{
+    "data": [1, 2, 3, 4, 5, 6]
+}
+
+In some cases, there is more meta data like the size of the stack or a pointer to different elements in the stack. A user of this JSON-encoded stack would know the top element of the stack is the most recent element.
+
+
+In a Zod schema, the only thing we really need to capture is the array of elements since a lot of logic is done outside of the data structure. Zod will model shape and constraints of the data but not behavior. However, this is very rudimentary and 
+
+const StackSchema = z.object({
+    elements: z.array(z.number()),
+    size: z.number().int().nonnegative()
+        .refine((val) => {
+            // Logic to check if the value and size of the elements array are actually the same
+            if (val !== elements.length) {
+                return false;
+            }
+            return true;
+        }, {
+            message: "size must match elements.length"
+        })
+});
+
+// Comments and Concerns
+For my size checking, I'm not sure if I am able to reference the values that would make up the object directly within the construction of the object.

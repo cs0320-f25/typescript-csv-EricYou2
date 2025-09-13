@@ -8,8 +8,7 @@ My favorite data structure is a Stack because of its versatility to keep track o
 
 In some cases, there is more meta data like the size of the stack or a pointer to different elements in the stack. A user of this JSON-encoded stack would know the top element of the stack is the most recent element.
 
-
-In a Zod schema, the only thing we really need to capture is the array of elements since a lot of logic is done outside of the data structure. Zod will model shape and constraints of the data but not behavior. However, this is very rudimentary and 
+In a Zod schema, the only thing we really need to capture is the array of elements since a lot of logic is done outside of the data structure. Zod will model shape and constraints of the data but not behavior. However, this is very rudimentary and to extend its functionality, I wanted to add a size variable to help the user. This also helps fact check itself and see if the object contains the proper amount of elements we are expecting. This addition further helps runtime when using this schema because calling length on the elements array is an O(n) operation and doing it everytime we care about the length can be costly. 
 
 const StackSchema = z.object({
     elements: z.array(z.number()),

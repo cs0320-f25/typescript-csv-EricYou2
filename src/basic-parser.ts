@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as readline from "readline";
+import * as z from "zod";
 
 /**
  * This is a JSDoc comment. Similar to JavaDoc, it documents a public-facing
@@ -12,9 +13,14 @@ import * as readline from "readline";
  * You shouldn't need to alter them.
  * 
  * @param path The path to the file being loaded.
- * @returns a "promise" to produce a 2-d array of cell values
+ * @param schema (Optional) A Zod schema describing the structure of each row.
+ * @returns If schema is provided, returns an object with either `data` (array of parsed rows) or `errors` (array of error objects).
+ *          If schema is not provided, returns a 2-d array of cell values (string[][]).
  */
-export async function parseCSV(path: string): Promise<string[][]> {
+export async function parseCSV<T>(
+  path: string,
+  schema?: z.ZodType<T>
+): Promise<{ data: T[] } | { errors: { row: number; error: z.ZodError }[] } | string[][]> {
   // This initial block of code reads from a file in Node.js. The "rl"
   // value can be iterated over in a "for" loop. 
   const fileStream = fs.createReadStream(path);
@@ -22,16 +28,32 @@ export async function parseCSV(path: string): Promise<string[][]> {
     input: fileStream,
     crlfDelay: Infinity, // handle different line endings
   });
-  
-  // Create an empty array to hold the results
-  let result = []
-  
-  // We add the "await" here because file I/O is asynchronous. 
-  // We need to force TypeScript to _wait_ for a row before moving on. 
-  // More on this in class soon!
+
+  let result: string[][] = [];
   for await (const line of rl) {
     const values = line.split(",").map((v) => v.trim());
-    result.push(values)
+    result.push(values);
   }
-  return result
+
+  if (!schema) {
+    return result;
+  }
+
+  const parsedRows: T[] = [];
+  const errors: { row: number; error: z.ZodError }[] = [];
+
+  result.forEach((row, idx) => {
+    const parsed = schema.safeParse(row);
+    if (parsed.success) {
+      parsedRows.push(parsed.data);
+    } else {
+      errors.push({ row: idx + 1, error: parsed.error });
+    }
+  });
+
+  if (errors.length > 0) {
+    return { errors };
+  } else {
+    return { data: parsedRows };
+  }
 }

@@ -29,12 +29,14 @@ export async function parseCSV<T>(
     crlfDelay: Infinity, // handle different line endings
   });
 
+  // Original parsing logic splitting on commas and trimming whitespace
   let result: string[][] = [];
   for await (const line of rl) {
     const values = line.split(",").map((v) => v.trim());
     result.push(values);
   }
 
+  // If no schema is provided, return the raw 2D array of strings
   if (!schema) {
     return result;
   }
@@ -42,6 +44,7 @@ export async function parseCSV<T>(
   const parsedRows: T[] = [];
   const errors: { row: number; error: z.ZodError }[] = [];
 
+  // Iterate through each row and safeParse the row to match the schema
   result.forEach((row, idx) => {
     const parsed = schema.safeParse(row);
     if (parsed.success) {
@@ -51,6 +54,7 @@ export async function parseCSV<T>(
     }
   });
 
+  // Check if there are any errors
   if (errors.length > 0) {
     return { errors };
   } else {

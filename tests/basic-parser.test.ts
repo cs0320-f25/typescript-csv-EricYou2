@@ -1,4 +1,4 @@
-import { parseCSV, PersonRowSchema, Person } from "../src/basic-parser";
+import { parseCSV } from "../src/basic-parser";
 import * as path from "path";
 import { z } from "zod";
 
@@ -8,6 +8,7 @@ const PEOPLE_WHITESPACE_CSV_PATH = path.join(__dirname, "../data/people_whitespa
 const PEOPLE_QUOTES_CSV_PATH = path.join(__dirname, "../data/people_extra_quotes.csv");
 const PEOPLE_EMPTY_CSV_PATH = path.join(__dirname, "../data/people_empty.csv");
 
+// Original given tests
 test("parseCSV yields arrays", async () => {
   const results = await parseCSV(PEOPLE_CSV_PATH);
 
@@ -34,6 +35,7 @@ test("parseCSV yields only arrays", async () => {
   }
 });
 
+// Tests add in Task A
 test("parseCSV handles quoted fields with commas", async () => {
   const results = await parseCSV(PEOPLE_COMMA_CSV_PATH);
   if (Array.isArray(results)) {
@@ -90,6 +92,14 @@ test("parseCSV handles empty fields", async () => {
   }
 });
 
+//Tests add in Task C
+
+// Define PersonRowSchema and Person type like from class
+export const PersonRowSchema = z
+  .tuple([z.string(), z.coerce.number()])
+  .transform((tup) => ({ name: tup[0], age: tup[1] }));
+export type Person = z.infer<typeof PersonRowSchema>;
+
 test("parseCSV returns data if all rows are valid according to schema", async () => {
   const results = await parseCSV<Person>(PEOPLE_CSV_PATH, PersonRowSchema);
 
@@ -130,5 +140,17 @@ test("parseCSV works with a different schema", async () => {
     expect(Array.isArray(results.errors)).toBe(true);
   } else {
     throw new Error("Expected schema result but got string[][]");
+  }
+});
+
+test("parseCSV returns string[][] when schema is undefined", async () => {
+  const results = await parseCSV(PEOPLE_CSV_PATH, undefined);
+
+  if (Array.isArray(results)) {
+    expect(results).toHaveLength(5);
+    expect(results[0]).toEqual(["name", "age"]);
+    expect(results[1]).toEqual(["Alice", "23"]);
+  } else {
+    throw new Error("Expected string[][] but got schema result");
   }
 });
